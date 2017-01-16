@@ -1,97 +1,129 @@
-const R = require("ramda");
-const program = require("commander");
-const chalk = require("chalk");
-const fs = require("fs");
-const path = require("path");
-const du = require("dotenv-utils")
+#! /usr/bin/env node
 
-// Utils
+if (!process.env.NODE_ENV) {
+  require("dotenv").config()
+}
+
+const program = require("commander")
+const chalk = require("chalk")
+const fs = require("fs")
+const fsPath = require('fs-path')
+const path = require("path")
+const du = require("dotenv-utils")
+const R = require("ramda")
+const {fetchContent} = require("./phraseApp")
 
 const invariant = (truthy, message) => {
-  if (!truthy) {
+  if (R.isNil(truthy) || R.isEmpty(truthy)) {
     throw chalk.red(`${message}\nPass "-h" to this script for help.`)
   }
 }
 
 const success = (message) => console.log(chalk.green(message))
 
-const getContentName = () => `content-${new Date().toISOString()}.json`
+const getContentName = () => `content-${new Date().toISOString().replace(/:/g, "-")}.json`
 
 const readJsonFile = (filePath) => JSON.parse(
   fs.readFileSync(path.resolve(filePath), {encording: "utf8"})
 )
 
-
-// Data processing
-
 const updateContent = (langs, keys, content, remoteContent) => {
   const paths = R.xprod(langs, keys)
 
-  const updatedContent =  R.reduce(
-    (contentAcc, path) => R.set(
-      R.lensPath(path),
-      R.path(path, remoteContent),
-      contentAcc
-    ),
+  return R.reduce(
+    (contentAcc, path) => {
+      const value = R.path(path, remoteContent)
+      if (!value) {
+        throw new Error(`wrong key: ${path.join()}`)
+      }
+      return R.assocPath(
+        path,
+        value,
+        contentAcc
+      )
+    },
     content,
     paths
   )
-
-  return updatedContent
 }
 
-
-// Data fetching
-
-// Use concurrency-limited data fetching with p-map and fetch
-
-const fetchContent = () => ({
-  "en": {
-    "page:index": {
-      "title": "New Title",
-      "body": "New Content..."
-    }
-  },
-  "cs": {
-    "page:index": {
-      "title": "Novy nadpis",
-      "body": "Novy obsah..."
-    }
-  }
+const logOptions = (options) => {
+  console.log('output path: %s', options.output);
+  console.log('PhraseApp project ID: %s', options.projectId);
+  console.log('PhraseApp access token: %s', options.accessToken);
+  console.log('default locale: %s', options.defaultLocale);
 }
-)
 
-
-// CLI
-
-// PhraseApp keys/ids should be loaded either through CLI, from inline env,
-// or .env
-
-// Some top-level option similar to the "all" option would probably be handy.
-// I am thinking just `option('-a, --all')`, which simply fetches remote content
-// and writes it `output`.
-
-// Also, it would be good if this scrip was actually executable. Ei. it should
-// add itself to `node_modules/.bin` so that it can be run from package.json
-// scripts.
-
-program
-  .option("-k, --keys <list>", "comma-separated list of keys to update", du.array)
-  .option("-l, --langs <list>", "comma-separated list of languages for which keys should be updated", du.array)
-  .option("-c, --content <path>", "relative path to current content", readJsonFile)
-  .option("-o, --output <path>", "relative path to which new content should be written")
-  .parse(process.argv);
-
-const main = ({keys, langs, content = {}, output = getContentName()}) => {
+const update = ({output = getContentName(), projectId, accessToken, defaultLocale}, {keys, langs, content}) => {
+  invariant(projectId, "Please provide PhraseApp project ID")
+  invariant(accessToken, "Please provide PhraseApp access token")
+  invariant(defaultLocale, "Please provide default locale")
   invariant(keys, "Please provide at least one key to update.")
   invariant(langs, "Please provide at least one language for which keys should be updated.")
 
-  const remoteContent = fetchContent()
-  const updatedContent = updateContent(langs, keys, content, remoteContent)
-  fs.writeFileSync(output, JSON.stringify(updatedContent, null, 2))
-  success(`Success! Content written to "${output}".`)
+  const localContent = content ? readJsonFile(content) : {}
+
+  const localeFilter = (locale) => langs.includes(locale.code)
+  fetchContent(projectId, accessToken, defaultLocale, localeFilter)
+    .then((remoteContent) => {
+      const updatedContent = updateContent(langs, keys, localContent, remoteContent)
+      fsPath.writeFile(output, JSON.stringify(updatedContent, null, 2))
+      success(`Success! Content written to "${output}".`)
+    })
+    .catch((error) => {
+      throw chalk.red(`${error}\nCouldn't fetch remote content`)
+    })
 }
 
-// Do stuff!!
+const download = ({output = getContentName(), projectId, accessToken, defaultLocale}) => {
+  invariant(projectId, "Please provide PhraseApp project ID")
+  invariant(accessToken, "Please provide PhraseApp access token")
+  invariant(defaultLocale, "Please provide default locale")
 
-main(program)
+  fetchContent(projectId, accessToken, defaultLocale)
+    .then((remoteContent) => {
+      fsPath.writeFile(output, JSON.stringify(remoteContent, null, 2))
+      success(`Success! Content written to "${output}".`)
+    })
+    .catch((error) => {
+      throw chalk.red(`${error}\nCouldn't fetch remote content`)
+    })
+}
+
+program
+  .version('0.0.1')
+  .option("-o, --output <path>", "relative path to which new content should be written", process.env.OUTPUT)
+  .option("-p, --project-id <value>", "PhraseApp project ID", process.env.PHRASEAPP_PROJECT_ID)
+  .option("-t, --access-token <value>", "PhraseApp access token", process.env.PHRASEAPP_ACCESS_TOKEN)
+  .option("-d, --default-locale <value>", "default locale", process.env.DEFAULT_LOCALE)
+
+program
+  .command('update')
+  .description('update translations for given languages and keys')
+  .option("-k, --keys <list>", "comma-separated list of keys to update", du.array, du.array(process.env.KEYS))
+  .option("-l, --langs <list>", "comma-separated list of languages for which keys should be updated", du.array,
+    du.array(process.env.LANGS))
+  .option("-c, --content <path>", "relative path to current content", process.env.CONTENT)
+  .action((options) => {
+    console.log('languages:  %j', options.langs)
+    console.log('keys:  %j', options.keys)
+    console.log('content path: %s', options.content);
+    logOptions(program)
+    update(program, options)
+  })
+
+program
+  .command('download')
+  .description('download all PhraseApp translations')
+  .action(() => {
+    logOptions(program)
+    download(program)
+  })
+
+program.parse(process.argv);
+
+if (!program.args.length) {
+  program.help()
+}
+
+module.exports = {updateContent}
