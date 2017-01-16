@@ -1,5 +1,5 @@
 const test = require('ava')
-const {updateContent} = require("./index")
+const {updateContent} = require("./updateContent")
 
 const localContent =
 {
