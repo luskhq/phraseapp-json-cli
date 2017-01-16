@@ -1,3 +1,0 @@
-// Use Ava to write tests...
-
-// It's only necessary to write tests for the data transformations.
