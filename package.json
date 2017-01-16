@@ -1,10 +1,15 @@
 {
-  "name": "update-content",
+  "name": "phraseapp-json-cli",
   "version": "0.1.0",
-  "description": "Update content from PhraseApp",
-  "main": "index.js",
+  "description": "Update translations from PhraseApp",
+  "main": "src/cli.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luskhq/phraseapp-json-cli"
+  },
   "scripts": {
-    "test": "ava"
+    "test": "ava",
+    "lint": "eslint src"
   },
   "author": "Artur Muller <me@arturmuller.com> (http://arturmuller.com)",
   "license": "MIT",
@@ -25,6 +30,6 @@
   },
   "preferGlobal": "true",
   "bin": {
-    "update-content": "./index.js"
+    "phraseapp-json-cli": "src/cli.js"
   }
 }

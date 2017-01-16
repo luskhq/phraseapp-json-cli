@@ -1,4 +1,4 @@
-const pMap = require('p-map')
+const pMap = require("p-map")
 const fetch = require("node-fetch")
 const {unflatten} = require("flat")
 const R = require("ramda")
