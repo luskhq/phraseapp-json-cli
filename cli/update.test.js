@@ -1,8 +1,7 @@
 const test = require('ava')
-const {updateContent} = require("./updateContent")
+const {updateContent} = require("./update")
 
-const localContent =
-{
+const localContent = {
   "en": {
     "page:index": {
       "title": "Title",
@@ -28,8 +27,7 @@ const localContent =
 test("empty keys", (t) => {
   const languages = ["en"]
   const keys = []
-  const remoteContent =
-  {
+  const remoteContent = {
     "en": {
       "page:index": {
         "headline": "Headline",
@@ -45,8 +43,7 @@ test("empty keys", (t) => {
 test("empty languages", (t) => {
   const languages = []
   const keys = ["page:index"]
-  const remoteContent =
-  {
+  const remoteContent = {
     "en": {
       "page:index": {
         "headline": "Headline",
@@ -162,8 +159,7 @@ test("non empty local content, multiple languages, multiple keys", (t) => {
       }
     }
   }
-  const remoteContent =
-  {
+  const remoteContent = {
     "en": {
       "page:index": {
         "title": "New title",
