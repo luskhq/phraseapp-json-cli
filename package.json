@@ -2,7 +2,7 @@
   "name": "phraseapp-json-cli",
   "version": "0.1.0",
   "description": "Update translations from PhraseApp",
-  "main": "src/cli.js",
+  "main": "cli/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/luskhq/phraseapp-json-cli"
@@ -30,6 +30,6 @@
   },
   "preferGlobal": "true",
   "bin": {
-    "phraseapp-json-cli": "src/cli.js"
+    "pa-json": "cli/index.js"
   }
 }
