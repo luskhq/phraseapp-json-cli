@@ -1,9 +1,9 @@
 const chalk = require("chalk")
-const R = require("ramda")
-const fs = require("fs")
-const path = require("path")
-const fsPath = require("fs-path")
 const fetch = require("node-fetch")
+const fs = require("fs")
+const fsPath = require("fs-path")
+const path = require("path")
+const R = require("ramda")
 
 const validate = (value, message) => {
   if (R.not(value) || R.isEmpty(value)) {
@@ -11,29 +11,35 @@ const validate = (value, message) => {
   }
 }
 
+// eslint-disable-next-line no-console
 const success = (message) => console.log(chalk.green(message))
 
-const readJsonFile = (filePath) =>
-  JSON.parse(fs.readFileSync(path.resolve(filePath), {encording: "utf8"}))
+const readJsonFile = (filePath) => {
+  try {
+    return JSON.parse(fs.readFileSync(path.resolve(filePath), {encording: "utf8"}))
+  } catch (error) {
+    throw chalk.red(
+      `\nSorry, can't read or parse supplied JSON file.` +
+      `\nError: ${error.message}\n`
+    )
+  }
+}
 
-const writeFile = (path, file) =>
-  fsPath.writeFileSync(path, JSON.stringify(file, null, 2))
+const writeFile = (path, file) => fsPath.writeFileSync(path, JSON.stringify(file, null, 2))
 
-const fetchJSON = (url) =>
-  fetch(url)
-    .then((response) => {
-      if (response.status === 200) {
-        return response.json()
-      }
+const fetchJSON = (url, options) => fetch(url, options)
+  .then((response) => {
+    if (response.ok) {
+      return response.json()
+    }
 
-      return Promise.reject(response)
-    })
-    // Have to use separate catch in order to catch the Promise.reject above
-    .catch((error) => {
-      throw chalk.red(
-        `\nSorry, couldn't fetch remote content.` +
-        `\nError: ${error.statusText} (${error.status}) ${error.url}\n`
-      )
-    })
+    return Promise.reject(response)
+  })
+  .catch((error) => {
+    throw chalk.red(
+      `\nSorry, couldn't perform request.` +
+      `\nError: ${error.statusText} (${error.status}) ${error.url}\n`
+    )
+  })
 
 module.exports = {validate, success, readJsonFile, writeFile, fetchJSON}
