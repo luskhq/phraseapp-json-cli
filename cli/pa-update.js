@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 const program = require("commander")
 const {validate, success, writeFile, readJsonFile} = require("./utils")
 const {downloadLocales, updateContent} = require("./actions")
