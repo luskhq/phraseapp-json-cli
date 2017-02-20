@@ -5,8 +5,8 @@ const {validate, success, readJsonFile} = require("./utils")
 const {uploadLocales} = require("./actions")
 
 program
-  .option("-p, --project-id <value>", "PhraseApp project ID", process.env.PHRASEAPP_PROJECT_ID)
-  .option("-t, --access-token <value>", "PhraseApp access token", process.env.PHRASEAPP_ACCESS_TOKEN)
+  .option("--project-id <value>", "PhraseApp project ID", process.env.PHRASEAPP_PROJECT_ID)
+  .option("--access-token <value>", "PhraseApp access token", process.env.PHRASEAPP_ACCESS_TOKEN)
   .parse(process.argv)
 
 const {
