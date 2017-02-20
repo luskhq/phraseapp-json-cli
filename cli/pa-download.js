@@ -5,9 +5,9 @@ const {downloadLocales} = require("./actions")
 const {validate, success, writeFile} = require("./utils")
 
 program
-  .option("--project-id <value>", "PhraseApp project ID", process.env.PHRASEAPP_PROJECT_ID)
-  .option("--access-token <value>", "PhraseApp access token", process.env.PHRASEAPP_ACCESS_TOKEN)
-  .option("--default-locale <value>", "default locale code to which empty keys should fall back to", process.env.PHRASEAPP_DEFAULT_LOCALE)
+  .option("-p, --project-id <value>", "PhraseApp project ID", process.env.PHRASEAPP_PROJECT_ID)
+  .option("-t, --access-token <value>", "PhraseApp access token", process.env.PHRASEAPP_ACCESS_TOKEN)
+  .option("-d, --default-locale <value>", "default locale code to which empty keys should fall back to", process.env.PHRASEAPP_DEFAULT_LOCALE)
   .parse(process.argv)
 
 const {

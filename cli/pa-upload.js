@@ -9,9 +9,6 @@ program
   .option("-t, --access-token <value>", "PhraseApp access token", process.env.PHRASEAPP_ACCESS_TOKEN)
   .parse(process.argv)
 
-// const accessToken = program.accessToken
-// const projectID = program.projectId
-// const path = program.args[0]
 const {
   accessToken,
   projectId: projectID,
