@@ -16,7 +16,7 @@ const success = (message) => console.log(chalk.green(message))
 
 const readJsonFile = (filePath) => {
   try {
-    return JSON.parse(fs.readFileSync(path.resolve(filePath), {encording: "utf8"}))
+    return JSON.parse(fs.readFileSync(path.resolve(filePath), {encoding: "utf8"}))
   } catch (error) {
     throw chalk.red(
       `\nSorry, can't read or parse supplied JSON file.` +
