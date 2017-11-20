@@ -18,8 +18,9 @@ const downloadLocale = (options) => {
   const params = [
     "file_format=simple_json",
     "include_empty_translations=true",
-    `fallback_locale_id=${defaultLocaleID}`,
-  ].join("&")
+  ]
+  .concat(defaultLocaleID ? [`fallback_locale_id=${defaultLocaleID}`] : [])
+  .join("&")
 
   return fetchJSON(`https://${accessToken}:@api.phraseapp.com/v2/projects/${projectID}/locales/${localeID}/download?${params}`)
     .then((localeContent) => {

@@ -26,14 +26,19 @@ const downloadLocales = (options) => {
 
   return listLocales({projectID, accessToken})
     .then((locales) => {
-      const defaultLocale = R.find(R.propEq("code", defaultLocaleCode), locales)
+      let defaultLocaleId = null
+      if (defaultLocaleCode) {
+        const defaultLocale = R.find(R.propEq("code", defaultLocaleCode), locales)
 
-      validate(
-        defaultLocale,
-        `Sorry, can't download locales because the supplied default locale ` +
-        `"${defaultLocaleCode}" doesn't exist on remote content. ` +
-        `Check your input for typos.`
-      )
+        validate(
+          defaultLocale,
+          `Sorry, can't download locales because the supplied default locale ` +
+          `"${defaultLocaleCode}" doesn't exist on remote content. ` +
+          `Check your input for typos.`
+        )
+
+        defaultLocaleId = defaultLocale.id
+      }
 
       const targetLocales = langs
         ? locales.filter(locale => langs.includes(locale.code))
@@ -47,7 +52,7 @@ const downloadLocales = (options) => {
             accessToken,
             localeID: locale.id,
             localeCode: locale.code,
-            defaultLocaleID: defaultLocale.id
+            defaultLocaleID: defaultLocaleId
           })
         },
         {concurrency: 2}

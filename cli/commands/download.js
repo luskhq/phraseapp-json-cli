@@ -12,7 +12,6 @@ const download = createCommand((args, options, logger) => {
 
   validate(projectID, "Please provide PhraseApp project ID");
   validate(accessToken, "Please provide PhraseApp access token");
-  validate(defaultLocaleCode, "Please provide default locale");
   validate(path, "Please provide path to which content should be downloaded");
 
   downloadLocales({

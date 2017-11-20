@@ -19,7 +19,6 @@ const update = createCommand((args, options, logger) => {
   const {
     projectId: projectID,
     accessToken,
-    defaultLocale: defaultLocaleCode,
   } = options;
 
   const keys = toArray(rawKeys);
@@ -27,7 +26,6 @@ const update = createCommand((args, options, logger) => {
 
   validate(projectID, "Please provide PhraseApp project ID");
   validate(accessToken, "Please provide PhraseApp access token");
-  validate(defaultLocaleCode, "Please provide PhraseApp default locale");
   validate(path, "Please provide path to content to update");
   validate(keys.length > 0, "Please provide at least one key to update.");
   validate(
@@ -40,7 +38,7 @@ const update = createCommand((args, options, logger) => {
   downloadLocales({
     projectID,
     accessToken,
-    defaultLocaleCode,
+    defaultLocaleCode: null,
     langs,
   }).then(remoteContent => {
     const updatedContent = updateContent(
