@@ -1,6 +1,7 @@
 const R = require("ramda")
 const pMap = require("p-map")
 const flatten = require("flat")
+const {emojify, unemojify} = require('node-emoji')
 const {unflatten} = require("flat")
 const {validate} = require("./utils")
 const {listLocales, downloadLocale, uploadLocale} = require("./phraseapp-api")
@@ -20,6 +21,17 @@ const updateContent = (langs, keys, content, remoteContent) => {
   const paths = R.xprod(langs, keys)
   return R.reduce(makeContentReducer(remoteContent), content, paths)
 }
+
+const serializeLocale = R.compose(
+  JSON.stringify,
+  R.map(unemojify),
+  flatten
+)
+
+const deserializeLocale = R.compose(
+  unflatten,
+  R.map(emojify)
+)
 
 const downloadLocales = (options) => {
   const {projectID, accessToken, defaultLocaleCode, langs} = options
@@ -56,7 +68,7 @@ const downloadLocales = (options) => {
     .then((responses) => {
       return R.reduce(
         (acc, [localeCode, localeContent]) => {
-          return R.assoc(localeCode, unflatten(localeContent), acc)
+          return R.assoc(localeCode, deserializeLocale(localeContent), acc)
         },
         {},
         responses
@@ -70,7 +82,7 @@ const uploadLocales = ({projectID, accessToken, content}) => {
   return pMap(
     locales,
     ([localeCode, nestedLocaleContent]) => {
-      const localeContent = JSON.stringify(flatten(nestedLocaleContent))
+      const localeContent = serializeLocale(nestedLocaleContent)
       return uploadLocale({
         projectID,
         accessToken,
