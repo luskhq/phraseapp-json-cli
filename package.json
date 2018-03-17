@@ -1,6 +1,6 @@
 {
   "name": "phraseapp-json-cli",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Update translations from PhraseApp",
   "main": "cli/index.js",
   "repository": {
