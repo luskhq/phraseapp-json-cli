@@ -18,9 +18,9 @@ pa <command> [options] [<args>]
 
 Available commands
 
-- [download](#download-command)
-- [update](#update-command)
-- [upload](#upload-command)
+* [download](#download-command)
+* [update](#update-command)
+* [upload](#upload-command)
 
 All commands will require you to specify PhraseApp-related options like `--project-id` or `--access-token`. This is great for trying out the CLI, but specifying everything inline gets tedious very quickly. For your convenience, these options can be also specified as environment variables, which can be stored in `.env` file.
 
@@ -46,14 +46,14 @@ pa download [options] <path>
 
 ##### Options
 
-- `-h, --help` output usage information
-- `--project-id <value>` PhraseApp project ID
-- `--access-token <value>` PhraseApp access token
-- `--default-locale <value>` default locale code to which empty keys should fall back to
+* `-h, --help` output usage information
+* `--project-id <value>` PhraseApp project ID
+* `--access-token <value>` PhraseApp access token
+* `--fallback-locale <value>` default locale code to which empty keys should fall back to
 
 ##### Parameters
 
-- `path` relative path to which downloaded JSON file will be written
+* `path` relative path to which downloaded JSON file will be written
 
 ##### Example
 
@@ -76,16 +76,16 @@ pa update [options] <keys> <langs> <path>
 
 ##### Options
 
-- `-h, --help` output usage information
-- `--project-id <value>` PhraseApp project ID
-- `--access-token <value>` PhraseApp access token
-- `--default-locale <value>` default locale code to which empty keys should fall back to
+* `-h, --help` output usage information
+* `--project-id <value>` PhraseApp project ID
+* `--access-token <value>` PhraseApp access token
+* `--fallback-locale <value>` default locale code to which empty keys should fall back to
 
 ##### Parameters
 
-- `keys` comma-separated list of keys to update
-- `langs` comma-separated list of languages for which keys should be updated
-- `path` relative path to JSON file which will be updated
+* `keys` comma-separated list of keys to update
+* `langs` comma-separated list of languages for which keys should be updated
+* `path` relative path to JSON file which will be updated
 
 ##### Example
 
@@ -100,7 +100,7 @@ pa update footer,header cs,en content.json
 
 Upload specified content file to PhraseApp.
 
-#### Usage  
+#### Usage
 
 ```bash
 pa upload [options] <path>
@@ -108,17 +108,17 @@ pa upload [options] <path>
 
 ##### Options
 
-- `-h, --help` output usage information
-- `--project-id <value>` PhraseApp project ID
-- `--access-token <value>` PhraseApp access token
+* `-h, --help` output usage information
+* `--project-id <value>` PhraseApp project ID
+* `--access-token <value>` PhraseApp access token
 
 > If you're getting a 401 error, make sure your access token is read/write.
 
 ##### Parameters
 
-- `path` relative path to JSON file which will be uploaded
+* `path` relative path to JSON file which will be uploaded
 
-##### Example  
+##### Example
 
 Upload JSON file `content.json` to PhraseApp project.
 

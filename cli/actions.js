@@ -1,97 +1,98 @@
-const R = require("ramda")
-const pMap = require("p-map")
-const flatten = require("flat")
-const {emojify, unemojify} = require('node-emoji')
-const {unflatten} = require("flat")
-const {validate} = require("./utils")
-const {listLocales, downloadLocale, uploadLocale} = require("./phraseapp-api")
+const R = require("ramda");
+const pMap = require("p-map");
+const emoji = require("node-emoji");
+const flat = require("flat");
+const utils = require("./utils");
+const api = require("./phraseapp-api");
 
 // Transforms
-const makeContentReducer = (remoteContent) => (contentAcc, path) => {
-  const value = R.path(path, remoteContent)
-  validate(
+const makeContentReducer = remoteContent => (contentAcc, path) => {
+  const value = R.path(path, remoteContent);
+  utils.validate(
     value,
     `Sorry, can't update "${path[1]}" key for "${path[0]}" language because ` +
-    `it doesn't exist on remote content. Check your input for typos.`
-  )
-  return R.assocPath(path, value, contentAcc)
-}
+      `it doesn't exist on remote content. Check your input for typos.`,
+  );
+  return R.assocPath(path, value, contentAcc);
+};
 
 const updateContent = (langs, keys, content, remoteContent) => {
-  const paths = R.xprod(langs, keys)
-  return R.reduce(makeContentReducer(remoteContent), content, paths)
-}
+  const paths = R.xprod(langs, keys);
+  return R.reduce(makeContentReducer(remoteContent), content, paths);
+};
 
 const serializeLocale = R.compose(
   JSON.stringify,
-  R.map(unemojify),
-  flatten
-)
+  R.map(emoji.unemojify),
+  flat.flatten,
+);
 
-const deserializeLocale = R.compose(
-  unflatten,
-  R.map(emojify)
-)
+const deserializeLocale = R.compose(flat.unflatten, R.map(emoji.emojify));
 
-const downloadLocales = (options) => {
-  const {projectID, accessToken, defaultLocaleCode, langs} = options
+const downloadLocales = async (options, logger) => {
+  const { projectId, accessToken, fallbackLocaleCode, langs } = options;
 
-  return listLocales({projectID, accessToken})
-    .then((locales) => {
-      const defaultLocale = R.find(R.propEq("code", defaultLocaleCode), locales)
+  logger.debug("Getting locales...");
+  const locales = await api.listLocales({ projectId, accessToken });
 
-      validate(
-        defaultLocale,
-        `Sorry, can't download locales because the supplied default locale ` +
-        `"${defaultLocaleCode}" doesn't exist on remote content. ` +
-        `Check your input for typos.`
-      )
+  const fallbackLocale = R.find(R.propEq("code", fallbackLocaleCode), locales);
 
-      const targetLocales = langs
-        ? locales.filter(locale => langs.includes(locale.code))
-        : locales
+  if (fallbackLocaleCode) {
+    utils.validate(
+      fallbackLocale,
+      `Sorry, can't download locales because the supplied default locale ` +
+        `"${fallbackLocaleCode}" doesn't exist on remote content. ` +
+        `Check your input for typos.`,
+    );
+  }
 
-      return pMap(
-        targetLocales,
-        (locale) => {
-          return downloadLocale({
-            projectID,
-            accessToken,
-            localeID: locale.id,
-            localeCode: locale.code,
-            defaultLocaleID: defaultLocale.id
-          })
-        },
-        {concurrency: 2}
-      )
-    })
-    .then((responses) => {
-      return R.reduce(
-        (acc, [localeCode, localeContent]) => {
-          return R.assoc(localeCode, deserializeLocale(localeContent), acc)
-        },
-        {},
-        responses
-      )
-    })
-}
+  const targetLocales = langs
+    ? locales.filter(locale => langs.includes(locale.code))
+    : locales;
 
-const uploadLocales = ({projectID, accessToken, content}) => {
-  const locales = R.toPairs(content)
+  const responses = await pMap(
+    targetLocales,
+    locale => {
+      logger.debug(`Downloading '${locale.code}' locale`);
+
+      return api.downloadLocale({
+        projectId,
+        accessToken,
+        localeId: locale.id,
+        localeCode: locale.code,
+        fallbackLocaleId: fallbackLocale ? fallbackLocale.id : null,
+      });
+    },
+    { concurrency: 2 },
+  );
+
+  return R.reduce(
+    (acc, [localeCode, localeContent]) => {
+      return R.assoc(localeCode, deserializeLocale(localeContent), acc);
+    },
+    {},
+    responses,
+  );
+};
+
+const uploadLocales = ({ projectId, accessToken, content }, logger) => {
+  const locales = R.toPairs(content);
 
   return pMap(
     locales,
     ([localeCode, nestedLocaleContent]) => {
-      const localeContent = serializeLocale(nestedLocaleContent)
-      return uploadLocale({
-        projectID,
+      const localeContent = serializeLocale(nestedLocaleContent);
+      logger.debug(`Uploading '${localeCode}' locale`);
+
+      return api.uploadLocale({
+        projectId,
         accessToken,
         localeCode,
-        localeContent
-      })
+        localeContent,
+      });
     },
-    {concurrency: 2}
-  )
-}
+    { concurrency: 2 },
+  );
+};
 
-module.exports = {downloadLocales, uploadLocales, updateContent}
+module.exports = { downloadLocales, uploadLocales, updateContent };

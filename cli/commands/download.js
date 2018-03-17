@@ -1,28 +1,23 @@
-const { green } = require("chalk");
-const { createCommand, validate, writeFile } = require("../utils");
-const { downloadLocales } = require("../actions");
+const chalk = require("chalk");
+const utils = require("../utils");
+const actions = require("../actions");
 
-const download = createCommand((args, options, logger) => {
+const download = utils.createCommand(async (args, options, logger) => {
   const { path } = args;
   const {
-    projectId: projectID,
+    projectId,
     accessToken,
-    defaultLocale: defaultLocaleCode,
+    fallbackLocale: fallbackLocaleCode,
   } = options;
 
-  validate(projectID, "Please provide PhraseApp project ID");
-  validate(accessToken, "Please provide PhraseApp access token");
-  validate(defaultLocaleCode, "Please provide default locale");
-  validate(path, "Please provide path to which content should be downloaded");
+  logger.info("Starting download...");
+  const remoteContent = await actions.downloadLocales(
+    { projectId, accessToken, fallbackLocaleCode },
+    logger,
+  );
 
-  downloadLocales({
-    projectID,
-    accessToken,
-    defaultLocaleCode,
-  }).then(remoteContent => {
-    writeFile(path, remoteContent);
-    logger.info(green(`Success! Content downloaded to "${path}".`));
-  });
+  utils.writeFile(path, remoteContent);
+  logger.info(chalk.green(`Success! Content downloaded to "${path}".`));
 });
 
 module.exports = download;

@@ -5,9 +5,14 @@ const fsPath = require("fs-path");
 const path = require("path");
 const R = require("ramda");
 
-const createCommand = cb => (args, options, logger) => {
+const createCommand = cb => async (args, options, logger) => {
   try {
-    cb(args, options, logger);
+    logger.debug("Arguments:", args);
+    logger.debug();
+    logger.debug("Options:", options);
+    logger.debug();
+
+    await cb(args, options, logger);
   } catch (error) {
     logger.error(`${chalk.red(`Failed. ${error.message}`)}\n`);
     logger.debug(error);
@@ -17,48 +22,45 @@ const createCommand = cb => (args, options, logger) => {
 
 const validate = (value, message) => {
   if (R.not(value) || R.isEmpty(value)) {
-    throw Error(`\n${message}\nPass "-h" to this script for help.\n`);
+    throw new Error(`\n${message}\nPass "-h" to this script for help.\n`);
   }
 };
-
-const toArray = s =>
-  s ? R.pipe(R.split(","), R.map(R.trim), R.filter(Boolean))(s) : [];
 
 const readJsonFile = filePath => {
   try {
     return JSON.parse(
-      fs.readFileSync(path.resolve(filePath), { encoding: "utf8" })
+      fs.readFileSync(path.resolve(filePath), { encoding: "utf8" }),
     );
   } catch (error) {
-    throw Error(
+    throw new Error(
       `\nSorry, can't read or parse supplied JSON file.` +
-        `\nError: ${error.message}\n`
+        `\nError: ${error.message}\n`,
     );
   }
 };
 
 const writeFile = (path, file) =>
-  fsPath.writeFileSync(path, JSON.stringify(file, null, 2));
+  fsPath.writeFileSync(path, `${JSON.stringify(file, null, 2)}\n`);
 
-const fetchJSON = (url, options) =>
-  fetch(url, options)
-    .then(response => {
-      if (response.ok) {
-        return response.json();
-      }
+const fetchJSON = async (url, options) => {
+  const response = await fetch(url, options);
 
-      return Promise.reject(response);
-    })
-    .catch(error => {
-      throw Error(
-        `\nSorry, couldn't perform request.` +
-          `\nError: ${error.statusText} (${error.status}) ${error.url}\n`
-      );
-    });
+  if (response.ok) {
+    return await response.json();
+  }
+
+  const { statusText, status } = response;
+  const body = await response.json();
+
+  const errorMessage =
+    `\nSorry, couldn't perform request. ${body.message}` +
+    `\n\nError: ${statusText} (${status}) ${url}\n`;
+
+  throw new Error(errorMessage);
+};
 
 module.exports = {
   validate,
-  toArray,
   readJsonFile,
   writeFile,
   fetchJSON,

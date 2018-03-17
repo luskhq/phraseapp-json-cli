@@ -1,45 +1,50 @@
-const FormData = require("form-data")
-const {fetchJSON} = require("./utils")
+const FormData = require("form-data");
+const { fetchJSON } = require("./utils");
 
-const listLocales = (options) => {
-  const {accessToken, projectID} = options
-  return fetchJSON(`https://${accessToken}:@api.phraseapp.com/v2/projects/${projectID}/locales`)
-}
+const listLocales = options => {
+  const { accessToken, projectId } = options;
+  return fetchJSON(
+    `https://${accessToken}:@api.phraseapp.com/v2/projects/${projectId}/locales`,
+  );
+};
 
-const downloadLocale = (options) => {
+const downloadLocale = async options => {
   const {
     accessToken,
-    projectID,
-    localeID,
+    projectId,
+    localeId,
     localeCode,
-    defaultLocaleID
-  } = options
+    fallbackLocaleId,
+  } = options;
 
+  // prettier-ignore
   const params = [
     "file_format=simple_json",
-    "include_empty_translations=true",
-    `fallback_locale_id=${defaultLocaleID}`,
-  ].join("&")
+    ...(fallbackLocaleId
+      ? [`fallback_locale_id=${fallbackLocaleId}`, `include_empty_translations=true`]
+      : []),
+  ].filter(Boolean).join("&");
 
-  return fetchJSON(`https://${accessToken}:@api.phraseapp.com/v2/projects/${projectID}/locales/${localeID}/download?${params}`)
-    .then((localeContent) => {
-      return [localeCode, localeContent]
-    })
-}
+  const localeContent = await fetchJSON(
+    `https://${accessToken}:@api.phraseapp.com/v2/projects/${projectId}/locales/${localeId}/download?${params}`,
+  );
 
-const uploadLocale = (options) => {
-  const {projectID, accessToken, localeCode, localeContent} = options
+  return [localeCode, localeContent];
+};
 
-  const form = new FormData()
-  form.append("file", localeContent, `${localeCode}.json`)
-  form.append("file_format", "simple_json")
-  form.append("locale_id", localeCode)
-  form.append("update_translations", "true")
+const uploadLocale = options => {
+  const { projectId, accessToken, localeCode, localeContent } = options;
+
+  const form = new FormData();
+  form.append("file", localeContent, `${localeCode}.json`);
+  form.append("file_format", "simple_json");
+  form.append("locale_id", localeCode);
+  form.append("update_translations", "true");
 
   return fetchJSON(
-    `https://${accessToken}:@api.phraseapp.com/v2/projects/${projectID}/uploads`,
-    {method: "POST", body: form}
-  )
-}
+    `https://${accessToken}:@api.phraseapp.com/v2/projects/${projectId}/uploads`,
+    { method: "POST", body: form },
+  );
+};
 
-module.exports = {listLocales, downloadLocale, uploadLocale}
+module.exports = { listLocales, downloadLocale, uploadLocale };

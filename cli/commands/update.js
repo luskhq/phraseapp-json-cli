@@ -1,57 +1,36 @@
-const { green } = require("chalk");
-const {
-  createCommand,
-  validate,
-  writeFile,
-  readJsonFile,
-  toArray,
-} = require("../utils");
-const { downloadLocales, updateContent } = require("../actions");
+const chalk = require("chalk");
+const utils = require("../utils");
+const actions = require("../actions");
 
-const update = createCommand((args, options, logger) => {
-  logger.debug("update command");
-  logger.debug("OPTIONS");
-  logger.debug(options);
-  logger.debug("ARGUMENTS");
-  logger.debug(args);
-
-  const { path, langs: rawLangs, keys: rawKeys } = args;
+const update = utils.createCommand(async (args, options, logger) => {
+  const { path, langs, keys } = args;
   const {
-    projectId: projectID,
+    projectId,
     accessToken,
-    defaultLocale: defaultLocaleCode,
+    fallbackLocale: fallbackLocaleCode,
   } = options;
 
-  const keys = toArray(rawKeys);
-  const langs = toArray(rawLangs);
+  const localContent = utils.readJsonFile(path);
 
-  validate(projectID, "Please provide PhraseApp project ID");
-  validate(accessToken, "Please provide PhraseApp access token");
-  validate(defaultLocaleCode, "Please provide PhraseApp default locale");
-  validate(path, "Please provide path to content to update");
-  validate(keys.length > 0, "Please provide at least one key to update.");
-  validate(
-    langs.length > 0,
-    "Please provide at least one language for which keys should be updated."
+  const remoteContent = await actions.downloadLocales(
+    {
+      projectId,
+      accessToken,
+      fallbackLocaleCode,
+      langs,
+    },
+    logger,
   );
 
-  const localContent = readJsonFile(path);
-
-  downloadLocales({
-    projectID,
-    accessToken,
-    defaultLocaleCode,
+  const updatedContent = actions.updateContent(
     langs,
-  }).then(remoteContent => {
-    const updatedContent = updateContent(
-      langs,
-      keys,
-      localContent,
-      remoteContent
-    );
-    writeFile(path, updatedContent);
-    logger.info(green(`Success! Content updated in "${path}".`));
-  });
+    keys,
+    localContent,
+    remoteContent,
+  );
+
+  utils.writeFile(path, updatedContent);
+  logger.info(chalk.green(`Success! Content updated in "${path}".`));
 });
 
 module.exports = update;
